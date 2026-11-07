@@ -1,146 +1,138 @@
 package org.example;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-public class EmployeeDAO
-{
-    private final String url = "jdbc:mysql://localhost:3306/collegedb";
-    private final String username = "root";
-    private final String password = "Ismail@2006"; // Change this
+public class EmployeeDAO {
+    private static final String DEFAULT_URL = "jdbc:mysql://localhost:3306/collegedb";
 
-    public Connection getConnection()
-    {
-        try
-        {
-            return DriverManager.getConnection(url, username, password);
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
-        return null;
+    public Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(
+                setting("EMS_DB_URL", DEFAULT_URL),
+                setting("EMS_DB_USER", "root"),
+                setting("EMS_DB_PASSWORD", "")
+        );
     }
 
-    // CREATE
-    public void addEmployee(Employee emp)
-    {
-        String query = "INSERT INTO employee VALUES(?,?,?)";
-
-        try(Connection con = getConnection();
-            PreparedStatement ps = con.prepareStatement(query))
-        {
-            ps.setInt(1, emp.getId());
-            ps.setString(2, emp.getName());
-            ps.setDouble(3, emp.getSalary());
-
-            int rows = ps.executeUpdate();
-
-            System.out.println(rows +
-                    " Employee Inserted Successfully");
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
+    public boolean createEmployee(Employee employee) throws SQLException {
+        String query = "INSERT INTO employee (id, name, salary) VALUES (?, ?, ?)";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, employee.getId());
+            statement.setString(2, employee.getName());
+            statement.setDouble(3, employee.getSalary());
+            return statement.executeUpdate() == 1;
         }
     }
 
-    // READ
-    public void viewEmployees()
-    {
-        String query =
-                "SELECT * FROM employee";
+    public List<Employee> getEmployees() throws SQLException {
+        String query = "SELECT id, name, salary FROM employee ORDER BY id";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet results = statement.executeQuery()) {
+            List<Employee> employees = new ArrayList<>();
+            while (results.next()) {
+                employees.add(readEmployee(results));
+            }
+            return employees;
+        }
+    }
 
-        try(Connection con = getConnection();
-            PreparedStatement ps = con.prepareStatement(query))
-        {
-            ResultSet rs = ps.executeQuery();
-
-            while(rs.next())
-            {
-                System.out.println(
-                        rs.getInt("id") + " "
-                                + rs.getString("name") + " "
-                                + rs.getDouble("salary")
-                );
+    public Optional<Employee> findEmployee(int id) throws SQLException {
+        String query = "SELECT id, name, salary FROM employee WHERE id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? Optional.of(readEmployee(results)) : Optional.empty();
             }
         }
-        catch(Exception e)
-        {
-            e.printStackTrace();
+    }
+
+    public boolean updateEmployeeSalary(int id, double salary) throws SQLException {
+        String query = "UPDATE employee SET salary = ? WHERE id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setDouble(1, salary);
+            statement.setInt(2, id);
+            return statement.executeUpdate() == 1;
         }
     }
 
-    // UPDATE
-    public void updateEmployee(int id, double salary)
-    {
-        String query = "UPDATE employee SET salary=? WHERE id=?";
-
-        try(Connection con = getConnection();
-            PreparedStatement ps = con.prepareStatement(query))
-        {
-            ps.setDouble(1, salary);
-            ps.setInt(2, id);
-
-            int rows = ps.executeUpdate();
-
-            System.out.println(rows + " Employee Updated Successfully");
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
+    public boolean removeEmployee(int id) throws SQLException {
+        String query = "DELETE FROM employee WHERE id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, id);
+            return statement.executeUpdate() == 1;
         }
     }
 
-    // DELETE
-    public void deleteEmployee(int id)
-    {
-        String query = "DELETE FROM employee WHERE id=?";
-
-        try(Connection con = getConnection();
-            PreparedStatement ps = con.prepareStatement(query))
-        {
-            ps.setInt(1, id);
-
-            int rows = ps.executeUpdate();
-
-            System.out.println(rows +
-                    " Employee Deleted Successfully");
-        }
-        catch(Exception e)
-        {
-            e.printStackTrace();
+    public void addEmployee(Employee employee) {
+        try {
+            System.out.println(createEmployee(employee)
+                    ? "1 Employee Inserted Successfully" : "No Employee Inserted");
+        } catch (SQLException exception) {
+            exception.printStackTrace();
         }
     }
 
-    // SEARCH
-    public void searchEmployee(int id)
-    {
-        String query = "SELECT * FROM employee WHERE id=?";
+    public void viewEmployees() {
+        try {
+            for (Employee employee : getEmployees()) {
+                System.out.println(employee.getId() + " " + employee.getName() + " " + employee.getSalary());
+            }
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
+    }
 
-        try(Connection con = getConnection();
-            PreparedStatement ps = con.prepareStatement(query))
-        {
-            ps.setInt(1, id);
+    public void updateEmployee(int id, double salary) {
+        try {
+            System.out.println(updateEmployeeSalary(id, salary)
+                    ? "1 Employee Updated Successfully" : "0 Employee Updated Successfully");
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
+    }
 
-            ResultSet rs = ps.executeQuery();
+    public void deleteEmployee(int id) {
+        try {
+            System.out.println(removeEmployee(id)
+                    ? "1 Employee Deleted Successfully" : "0 Employee Deleted Successfully");
+        } catch (SQLException exception) {
+            exception.printStackTrace();
+        }
+    }
 
-            if(rs.next())
-            {
+    public void searchEmployee(int id) {
+        try {
+            Optional<Employee> employee = findEmployee(id);
+            if (employee.isPresent()) {
+                Employee found = employee.get();
                 System.out.println("\nEmployee Found");
-
-                System.out.println("ID : " + rs.getInt("id"));
-
-                System.out.println("Name : " + rs.getString("name"));
-
-                System.out.println("Salary : " + rs.getDouble("salary"));
-            }
-            else
-            {
+                System.out.println("ID : " + found.getId());
+                System.out.println("Name : " + found.getName());
+                System.out.println("Salary : " + found.getSalary());
+            } else {
                 System.out.println("Employee Not Found");
             }
+        } catch (SQLException exception) {
+            exception.printStackTrace();
         }
-        catch(Exception e)
-        {
-            e.printStackTrace();
-        }
+    }
+
+    private static Employee readEmployee(ResultSet results) throws SQLException {
+        return new Employee(results.getInt("id"), results.getString("name"), results.getDouble("salary"));
+    }
+
+    private static String setting(String name, String defaultValue) {
+        String value = System.getenv(name);
+        return value == null ? defaultValue : value;
     }
 }
