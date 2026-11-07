@@ -1,126 +1,75 @@
 # Employee Management System
 
-A console-based Employee Management System built using **Java**, **JDBC**, **MySQL**, and **Maven**. The application allows users to perform CRUD (Create, Read, Update, Delete) operations on employee records stored in a MySQL database.
+A Java and JDBC employee management application backed by MySQL. It includes both the original menu-driven console app and an alternate Java Swing desktop interface.
 
 ## Features
 
-- Add a new employee
-- View all employees
-- Search employee by ID
-- Update employee salary
-- Delete employee
-- Menu-driven console interface
-- MySQL database integration using JDBC
-- Secure SQL execution using PreparedStatement
+- Add, list, search, update salary, and delete employee records
+- Swing desktop directory with ID search, row selection, input validation, and operation feedback
+- Console menu remains available through `org.example.Main`
+- Prepared statements for database queries
 
-## Technologies Used
+## Requirements
 
-- Java
-- JDBC (Java Database Connectivity)
-- MySQL
+- Java 25 or later
 - Maven
-- Git & GitHub
+- MySQL
 
-## Project Structure
+## Database setup
 
-```text
-Employee-Management-System
-│
-├── Employee.java
-├── EmployeeDAO.java
-├── Main.java
-├── pom.xml
-└── README.md
-```
-
-## Database Schema
+Create the database and table before launching either interface:
 
 ```sql
 CREATE DATABASE collegedb;
 
 USE collegedb;
 
-CREATE TABLE employee(
+CREATE TABLE employee (
     id INT PRIMARY KEY,
     name VARCHAR(50),
     salary DOUBLE
 );
 ```
 
-## Functionalities
+The application defaults to `jdbc:mysql://localhost:3306/collegedb`, database user `root`, and an empty password. Configure credentials with environment variables rather than editing source code:
 
-### Add Employee
-Insert a new employee record into the database.
+| Variable | Default | Description |
+| --- | --- | --- |
+| `EMS_DB_URL` | `jdbc:mysql://localhost:3306/collegedb` | JDBC connection URL |
+| `EMS_DB_USER` | `root` | MySQL user |
+| `EMS_DB_PASSWORD` | empty | MySQL password |
 
-### View Employees
-Display all employee records stored in the database.
+For example, in PowerShell:
 
-### Search Employee
-Retrieve employee details using the employee ID.
+```powershell
+$env:EMS_DB_USER = "root"
+$env:EMS_DB_PASSWORD = "your-password"
+```
 
-### Update Employee
-Modify the salary of an existing employee.
+## Run the Swing desktop app
 
-### Delete Employee
-Remove an employee record from the database.
-
-## Concepts Implemented
-
-- Object-Oriented Programming (OOP)
-- Encapsulation
-- Constructors
-- Getters and Setters
-- JDBC Connectivity
-- DriverManager
-- Connection
-- PreparedStatement
-- ResultSet
-- CRUD Operations
-- DAO (Data Access Object) Pattern
-- Exception Handling
-
-## How to Run
-
-1. Clone the repository:
+From the project directory, start the GUI with Maven:
 
 ```bash
-git clone https://github.com/Ismail-0707/employee-management-system-jdbc.git
+mvn compile exec:java -Dexec.mainClass="org.example.EmployeeSwingApp"
 ```
 
-2. Open the project in IntelliJ IDEA.
+In IntelliJ IDEA, import the project as a Maven project, configure the database environment variables in the run configuration, and run `EmployeeSwingApp`.
 
-3. Create the database and table using the SQL script provided above.
+## Run the console app
 
-4. Update the database credentials in `EmployeeDAO.java`.
+Run `org.example.Main` from IntelliJ IDEA, or use Maven:
 
-5. Run `Main.java`.
+```bash
+mvn compile exec:java -Dexec.mainClass="org.example.Main"
+```
 
-## Sample Menu
+## Project structure
 
 ```text
-===== Employee Management System =====
-
-1. Add Employee
-2. View Employees
-3. Update Employee
-4. Delete Employee
-5. Search Employee
-6. Exit
+src/main/java/org/example/
+├── Employee.java
+├── EmployeeDAO.java
+├── EmployeeSwingApp.java
+└── Main.java
 ```
-
-## Learning Outcomes
-
-Through this project, I gained hands-on experience with:
-
-- Connecting Java applications to MySQL databases
-- Performing CRUD operations using JDBC
-- Using PreparedStatement for parameterized queries
-- Processing query results with ResultSet
-- Applying OOP principles in Java
-- Managing source code using Git and GitHub
-
-## Author
-
-**Ismail**
-
-GitHub: https://github.com/Ismail-0707
